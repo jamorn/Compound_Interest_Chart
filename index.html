@@ -28,14 +28,20 @@
             🚀 เครื่องมือคำนวณการเติบโตของเงินทุน
         </h1>
         <p class="text-base sm:text-lg text-gray-600 mb-6 text-center">
-            เงินต้น: <span class="font-semibold text-gray-800">$100</span> | กำไร: <span class="font-semibold text-gray-800">1% ต่อวัน</span>
+            เงินต้น: <span id="initialCapitalDisplay" class="font-semibold text-gray-800">$100</span> | กำไร: <span class="font-semibold text-gray-800">1% ต่อวัน</span>
         </p>
         <p class="text-center text-sm text-gray-500 mb-4">
             ระยะเวลา: <span id="durationDisplay">3 ปี (1095 วัน)</span>
         </p>
 
-        <!-- Input Section for Year and Exchange Rate -->
+        <!-- Input Section for Capital, Year and Exchange Rate -->
         <div class="flex flex-col sm:flex-row items-center justify-center mb-6 space-y-4 sm:space-y-0 sm:space-x-8">
+            <div class="flex flex-col items-center">
+                <label for="initialCapitalInput" class="text-sm font-medium text-gray-700 mb-1">เงินต้นเริ่มต้น (USD):</label>
+                <input type="number" id="initialCapitalInput" value="100" min="100" class="w-24 px-4 py-2 text-center border border-gray-400 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
+                <!-- Warning message added here -->
+                <p id="capitalWarning" class="text-red-500 text-xs mt-1 hidden">เงินต้นขั้นต่ำคือ $100</p>
+            </div>
             <div class="flex flex-col items-center">
                 <label for="yearInput" class="text-sm font-medium text-gray-700 mb-1">ระยะเวลา (ปี):</label>
                 <input type="number" id="yearInput" value="3" step="1" min="1" max="5" class="w-24 px-4 py-2 text-center border border-gray-400 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
@@ -50,7 +56,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 text-center">
             <div class="bg-blue-50 p-4 rounded-lg shadow-sm">
                 <p class="text-sm text-gray-500">เงินต้นเริ่มต้น</p>
-                <p class="text-2xl font-bold text-gray-800">$100.00</p>
+                <p id="summaryInitialCapital" class="text-2xl font-bold text-gray-800">$100.00</p>
             </div>
             <div class="bg-green-50 p-4 rounded-lg shadow-sm">
                 <p class="text-sm text-gray-500">ยอดรวมสุดท้าย (บาท)</p>
@@ -114,9 +120,11 @@
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const initialCapitalUSD = 100;
             const dailyRate = 0.01;
             
+            const initialCapitalInput = document.getElementById('initialCapitalInput');
+            const initialCapitalDisplay = document.getElementById('initialCapitalDisplay');
+            const summaryInitialCapital = document.getElementById('summaryInitialCapital');
             const yearInput = document.getElementById('yearInput');
             const exchangeRateInput = document.getElementById('exchangeRateInput');
             const durationDisplay = document.getElementById('durationDisplay');
@@ -125,10 +133,11 @@
             const ctx = document.getElementById('compoundingChart').getContext('2d');
             const yearlySummaryTableBody = document.querySelector('#yearlySummaryTable tbody');
             const dailyTradingTableBody = document.querySelector('#dailyTradingTable tbody');
+            const capitalWarning = document.getElementById('capitalWarning');
 
             let compoundingChart = null; // Reference to the chart instance
 
-            function generateYearlySummaryTable() {
+            function generateYearlySummaryTable(initialCapitalUSD) {
                 yearlySummaryTableBody.innerHTML = '';
                 let currentCapital = initialCapitalUSD;
                 const monthlyGrowthFactor = Math.pow(1 + dailyRate, 30);
@@ -156,7 +165,7 @@
                 }
             }
             
-            function generateDailyTradingTable() {
+            function generateDailyTradingTable(initialCapitalUSD) {
                 dailyTradingTableBody.innerHTML = '';
                 let currentCapital = initialCapitalUSD;
 
@@ -188,6 +197,23 @@
 
 
             function updateChartAndSummary() {
+                // Get the initial capital from the input field
+                const rawInitialCapital = parseFloat(initialCapitalInput.value);
+                
+                // Show/hide warning message based on input value
+                if (rawInitialCapital < 100) {
+                    capitalWarning.classList.remove('hidden');
+                } else {
+                    capitalWarning.classList.add('hidden');
+                }
+
+                // Use a minimum of 100 for all calculations, regardless of input
+                const initialCapitalUSD = Math.max(100, rawInitialCapital || 100);
+                
+                // Update the displayed initial capital values
+                initialCapitalDisplay.textContent = `$${initialCapitalUSD.toFixed(2)}`;
+                summaryInitialCapital.textContent = `$${initialCapitalUSD.toFixed(2)}`;
+                
                 const years = parseInt(yearInput.value) || 0;
                 const totalDays = years * 365;
                 const exchangeRate = parseFloat(exchangeRateInput.value) || 0;
@@ -285,15 +311,16 @@
                     }
                 });
                 
-                // Call the functions to generate the tables
-                generateYearlySummaryTable();
-                generateDailyTradingTable();
+                // Pass the dynamic initial capital to the table generation functions
+                generateYearlySummaryTable(initialCapitalUSD);
+                generateDailyTradingTable(initialCapitalUSD);
             }
 
             // Initial render
             updateChartAndSummary();
 
             // Add event listeners to input fields
+            initialCapitalInput.addEventListener('input', updateChartAndSummary);
             yearInput.addEventListener('input', updateChartAndSummary);
             exchangeRateInput.addEventListener('input', updateChartAndSummary);
         });
