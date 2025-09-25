@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>พลังดอกเบี้ยทบต้น: 100 USD @ 1% ต่อวัน (3 ปี)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .container {
+            max-width: 900px;
+        }
+        #compoundingChart {
+            max-width: 100%;
+            height: 400px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div class="container mx-auto bg-white p-6 md:p-10 rounded-xl shadow-2xl border border-gray-200">
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-blue-700 mb-2 text-center">
+            🚀 การเติบโตของเงินทุนด้วยดอกเบี้ยทบต้น
+        </h1>
+        <p class="text-base sm:text-lg text-gray-600 mb-6 text-center">
+            เงินต้น: <span class="font-semibold text-gray-800">$100</span> | กำไร: <span class="font-semibold text-gray-800">1% ต่อวัน</span> | ระยะเวลา: <span class="font-semibold text-gray-800">3 ปี (1095 วัน)</span>
+        </p>
+
+        <!-- Summary Section -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 text-center">
+            <div class="bg-blue-50 p-4 rounded-lg shadow-sm">
+                <p class="text-sm text-gray-500">เงินต้นเริ่มต้น</p>
+                <p class="text-2xl font-bold text-gray-800">$100.00</p>
+            </div>
+            <div class="bg-green-50 p-4 rounded-lg shadow-sm">
+                <p class="text-sm text-gray-500">ยอดรวมสุดท้าย</p>
+                <p id="finalAmount" class="text-2xl font-extrabold text-green-600">กำลังคำนวณ...</p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg shadow-sm">
+                <p class="text-sm text-gray-500">กำไรสุทธิ</p>
+                <p id="netProfit" class="text-2xl font-bold text-gray-800">กำลังคำนวณ...</p>
+            </div>
+        </div>
+
+        <!-- Canvas for Chart.js -->
+        <div class="w-full">
+            <canvas id="compoundingChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const initialCapital = 100;
+            const dailyRate = 0.01;
+            const totalDays = 3 * 365;
+            
+            const labels = [];
+            const dataPoints = [];
+            let currentBalance = initialCapital;
+
+            // Generate data points for the chart
+            for (let day = 0; day <= totalDays; day++) {
+                if (day % 30 === 0 || day === totalDays) {
+                    labels.push(`Day ${day}`);
+                    dataPoints.push(parseFloat(currentBalance.toFixed(2)));
+                }
+
+                if (day < totalDays) {
+                    currentBalance *= (1 + dailyRate);
+                }
+            }
+            
+            // Display final amounts in the summary section
+            const finalAmountElement = document.getElementById('finalAmount');
+            const netProfitElement = document.getElementById('netProfit');
+            
+            const finalAmount = dataPoints[dataPoints.length - 1];
+            const netProfit = finalAmount - initialCapital;
+
+            finalAmountElement.textContent = `$${finalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+            netProfitElement.textContent = `$${netProfit.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+            
+            // Create the chart
+            const ctx = document.getElementById('compoundingChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'ยอดเงินรวม ($)',
+                        data: dataPoints,
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: 'start',
+                        tension: 0.2,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'กราฟแสดงการเติบโตแบบทวีคูณ (Exponential Growth)',
+                            font: { size: 16, weight: 'bold' },
+                            color: '#374151'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'ยอดเงิน ($)'
+                            },
+                            ticks: {
+                                callback: function(value, index, values) {
+                                    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact', compactDisplay: 'short' }).format(value);
+                                }
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'วัน'
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
