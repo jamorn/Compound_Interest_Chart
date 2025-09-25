@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>พลังดอกเบี้ยทบต้น: 100 USD @ 1% ต่อวัน (3 ปี)</title>
+    <title>พลังดอกเบี้ยทบต้น: เครื่องมือคำนวณ</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js CDN -->
@@ -25,12 +25,27 @@
 
     <div class="container mx-auto bg-white p-6 md:p-10 rounded-xl shadow-2xl border border-gray-200">
         <h1 class="text-3xl sm:text-4xl font-extrabold text-blue-700 mb-2 text-center">
-            🚀 การเติบโตของเงินทุนด้วยดอกเบี้ยทบต้น
+            🚀 เครื่องมือคำนวณการเติบโตของเงินทุน
         </h1>
         <p class="text-base sm:text-lg text-gray-600 mb-6 text-center">
-            เงินต้น: <span class="font-semibold text-gray-800">$100</span> | กำไร: <span class="font-semibold text-gray-800">1% ต่อวัน</span> | ระยะเวลา: <span class="font-semibold text-gray-800">3 ปี (1095 วัน)</span>
+            เงินต้น: <span class="font-semibold text-gray-800">$100</span> | กำไร: <span class="font-semibold text-gray-800">1% ต่อวัน</span>
+        </p>
+        <p class="text-center text-sm text-gray-500 mb-4">
+            ระยะเวลา: <span id="durationDisplay">3 ปี (1095 วัน)</span>
         </p>
 
+        <!-- Input Section for Year and Exchange Rate -->
+        <div class="flex flex-col sm:flex-row items-center justify-center mb-6 space-y-4 sm:space-y-0 sm:space-x-8">
+            <div class="flex flex-col items-center">
+                <label for="yearInput" class="text-sm font-medium text-gray-700 mb-1">ระยะเวลา (ปี):</label>
+                <input type="number" id="yearInput" value="3" step="1" min="1" max="5" class="w-24 px-4 py-2 text-center border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
+            </div>
+            <div class="flex flex-col items-center">
+                <label for="exchangeRateInput" class="text-sm font-medium text-gray-700 mb-1">อัตราแลกเปลี่ยน (1 USD = ? THB):</label>
+                <input type="number" id="exchangeRateInput" value="31" step="0.01" class="w-24 px-4 py-2 text-center border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
+            </div>
+        </div>
+        
         <!-- Summary Section -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 text-center">
             <div class="bg-blue-50 p-4 rounded-lg shadow-sm">
@@ -38,11 +53,11 @@
                 <p class="text-2xl font-bold text-gray-800">$100.00</p>
             </div>
             <div class="bg-green-50 p-4 rounded-lg shadow-sm">
-                <p class="text-sm text-gray-500">ยอดรวมสุดท้าย</p>
+                <p class="text-sm text-gray-500">ยอดรวมสุดท้าย (บาท)</p>
                 <p id="finalAmount" class="text-2xl font-extrabold text-green-600">กำลังคำนวณ...</p>
             </div>
             <div class="bg-gray-50 p-4 rounded-lg shadow-sm">
-                <p class="text-sm text-gray-500">กำไรสุทธิ</p>
+                <p class="text-sm text-gray-500">กำไรสุทธิ (บาท)</p>
                 <p id="netProfit" class="text-2xl font-bold text-gray-800">กำลังคำนวณ...</p>
             </div>
         </div>
@@ -55,100 +70,123 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const initialCapital = 100;
+            const initialCapitalUSD = 100;
             const dailyRate = 0.01;
-            const totalDays = 3 * 365;
             
-            const labels = [];
-            const dataPoints = [];
-            let currentBalance = initialCapital;
-
-            // Generate data points for the chart
-            for (let day = 0; day <= totalDays; day++) {
-                if (day % 30 === 0 || day === totalDays) {
-                    labels.push(`Day ${day}`);
-                    dataPoints.push(parseFloat(currentBalance.toFixed(2)));
-                }
-
-                if (day < totalDays) {
-                    currentBalance *= (1 + dailyRate);
-                }
-            }
-            
-            // Display final amounts in the summary section
+            const yearInput = document.getElementById('yearInput');
+            const exchangeRateInput = document.getElementById('exchangeRateInput');
+            const durationDisplay = document.getElementById('durationDisplay');
             const finalAmountElement = document.getElementById('finalAmount');
             const netProfitElement = document.getElementById('netProfit');
-            
-            const finalAmount = dataPoints[dataPoints.length - 1];
-            const netProfit = finalAmount - initialCapital;
-
-            finalAmountElement.textContent = `$${finalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
-            netProfitElement.textContent = `$${netProfit.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
-            
-            // Create the chart
             const ctx = document.getElementById('compoundingChart').getContext('2d');
-            
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'ยอดเงินรวม ($)',
-                        data: dataPoints,
-                        borderColor: 'rgb(59, 130, 246)',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        fill: 'start',
-                        tension: 0.2,
-                        pointRadius: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'กราฟแสดงการเติบโตแบบทวีคูณ (Exponential Growth)',
-                            font: { size: 16, weight: 'bold' },
-                            color: '#374151'
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    if (context.parsed.y !== null) {
-                                        label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
-                                    }
-                                    return label;
-                                }
-                            }
-                        }
+
+            let compoundingChart = null; // Reference to the chart instance
+
+            function updateChartAndSummary() {
+                const years = parseInt(yearInput.value) || 0;
+                const totalDays = years * 365;
+                const exchangeRate = parseFloat(exchangeRateInput.value) || 0;
+                
+                durationDisplay.textContent = `${years} ปี (${totalDays} วัน)`;
+
+                const labels = [];
+                const dataPoints = [];
+                let currentBalanceUSD = initialCapitalUSD;
+
+                // Generate data points for the chart
+                for (let day = 0; day <= totalDays; day++) {
+                    if (day % 30 === 0 || day === totalDays) {
+                        const currentBalanceTHB = currentBalanceUSD * exchangeRate;
+                        labels.push(`วันที่ ${day}`);
+                        dataPoints.push(parseFloat(currentBalanceTHB.toFixed(2)));
+                    }
+
+                    if (day < totalDays) {
+                        currentBalanceUSD *= (1 + dailyRate);
+                    }
+                }
+                
+                // Display final amounts in the summary section in THB
+                const finalAmountTHB = dataPoints[dataPoints.length - 1];
+                const netProfitTHB = finalAmountTHB - (initialCapitalUSD * exchangeRate);
+
+                finalAmountElement.textContent = `฿${finalAmountTHB.toLocaleString('th-TH', { minimumFractionDigits: 2 })}`;
+                netProfitElement.textContent = `฿${netProfitTHB.toLocaleString('th-TH', { minimumFractionDigits: 2 })}`;
+
+                // Destroy old chart and create a new one
+                if (compoundingChart) {
+                    compoundingChart.destroy();
+                }
+
+                compoundingChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'ยอดเงินรวม (บาท)',
+                            data: dataPoints,
+                            borderColor: 'rgb(59, 130, 246)',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            fill: 'start',
+                            tension: 0.2,
+                            pointRadius: 0
+                        }]
                     },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
                             title: {
                                 display: true,
-                                text: 'ยอดเงิน ($)'
+                                text: 'กราฟแสดงการเติบโตแบบทวีคูณ (Exponential Growth)',
+                                font: { size: 16, weight: 'bold' },
+                                color: '#374151'
                             },
-                            ticks: {
-                                callback: function(value, index, values) {
-                                    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact', compactDisplay: 'short' }).format(value);
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed.y !== null) {
+                                            label += new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(context.parsed.y);
+                                        }
+                                        return label;
+                                    }
                                 }
                             }
                         },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'วัน'
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'ยอดเงิน (บาท)'
+                                },
+                                ticks: {
+                                    callback: function(value, index, values) {
+                                        return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', notation: 'compact', compactDisplay: 'short' }).format(value);
+                                    }
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'วัน'
+                                }
                             }
                         }
                     }
-                }
-            });
+                });
+            }
+
+            // Initial chart render
+            updateChartAndSummary();
+
+            // Add event listeners to input fields
+            yearInput.addEventListener('input', updateChartAndSummary);
+            exchangeRateInput.addEventListener('input', updateChartAndSummary);
         });
     </script>
 </body>
